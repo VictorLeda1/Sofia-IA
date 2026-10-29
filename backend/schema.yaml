@@ -1,0 +1,362 @@
+openapi: 3.0.3
+info:
+  title: Sofia Prohall API
+  version: 1.0.0
+  description: API demonstrativa da consultora Sofia, com vendas e PIX inteiramente
+    simulados.
+paths:
+  /api/cart/items/:
+    post:
+      operationId: cart_items_create
+      summary: Adicionar ao carrinho
+      tags:
+      - Carrinho
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CartItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CartItemRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/cart/items/{product_id}/:
+    delete:
+      operationId: cart_items_destroy
+      summary: Remover unidades do carrinho
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Carrinho
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/chat/:
+    post:
+      operationId: chat_create
+      summary: Conversar com a Sofia (Gemini + ferramentas)
+      tags:
+      - Sofia IA
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/coupon/:
+    post:
+      operationId: coupon_create
+      summary: Aplicar PROHALL10
+      tags:
+      - Carrinho
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/orders/:
+    post:
+      operationId: orders_create
+      summary: Criar pedido fictício
+      tags:
+      - Checkout de teste
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/orders/{order_id}/:
+    get:
+      operationId: orders_retrieve
+      summary: Consultar pedido e validade do PIX
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Checkout de teste
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/orders/{order_id}/pix/:
+    post:
+      operationId: orders_pix_create
+      summary: Gerar ou renovar PIX não pagável
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - PIX falso
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/orders/{order_id}/simulate-payment/:
+    post:
+      operationId: orders_simulate_payment_create
+      summary: Simular pagamento do PIX
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - PIX falso
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/products/:
+    get:
+      operationId: list_products
+      summary: Listar os 15 produtos
+      tags:
+      - Catálogo
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/products/{product_id}/:
+    get:
+      operationId: get_product
+      summary: Ficha completa do produto
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Catálogo
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/session/:
+    get:
+      operationId: session_retrieve
+      summary: Estado atual da conversa
+      tags:
+      - Sessão
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/shipping/:
+    post:
+      operationId: shipping_create
+      summary: Calcular frete do carrinho atual
+      tags:
+      - Frete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShippingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShippingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShippingRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+components:
+  schemas:
+    CartItemRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        quantidade:
+          type: integer
+          minimum: 1
+          default: 1
+      required:
+      - id
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 2000
+          minLength: 1
+      required:
+      - message
+    CouponRequest:
+      type: object
+      properties:
+        codigo:
+          type: string
+      required:
+      - codigo
+    ModalidadeFreteEnum:
+      enum:
+      - economica
+      - expressa
+      type: string
+      description: |-
+        * `economica` - economica
+        * `expressa` - expressa
+    OrderRequest:
+      type: object
+      properties:
+        nome:
+          type: string
+          maxLength: 100
+          minLength: 2
+        email:
+          type: string
+          format: email
+          maxLength: 150
+        cep:
+          type: string
+        endereco:
+          type: string
+          maxLength: 180
+          minLength: 3
+        numero:
+          type: string
+          maxLength: 20
+        complemento:
+          type: string
+          maxLength: 120
+        modalidade_frete:
+          $ref: '#/components/schemas/ModalidadeFreteEnum'
+      required:
+      - cep
+      - email
+      - endereco
+      - modalidade_frete
+      - nome
+      - numero
+    ShippingRequest:
+      type: object
+      properties:
+        cep:
+          type: string
+        modalidade_frete:
+          $ref: '#/components/schemas/ModalidadeFreteEnum'
+      required:
+      - cep
