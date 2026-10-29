@@ -518,7 +518,6 @@ select {
 }
 .shipping-options {
   border-top: 1px solid #eee7ea;
-  border-bottom: 1px solid #eee7ea;
   margin-top: 20px;
   padding: 10px 0;
 }
@@ -668,6 +667,51 @@ select {
 }
 .checkout-form input::placeholder {
   color: #786773;
+}
+.freight-options {
+  min-width: 0;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 8px;
+}
+.freight-options legend {
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.checkout-form .freight-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #decfd7;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.checkout-form .freight-option:has(input:checked) {
+  border-color: #7a2149;
+  background: #fcf5f8;
+}
+.checkout-form .freight-option input {
+  width: auto;
+  margin: 0;
+  accent-color: #7a2149;
+}
+.freight-option span {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+.freight-option strong,
+.freight-option b {
+  font-size: 12px;
+}
+.freight-option small {
+  color: #705f69;
+  font-size: 11px;
+  font-weight: 400;
 }
 .field-pair {
   display: grid;

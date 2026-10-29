@@ -261,7 +261,11 @@ function Cart({
 }
 
 function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
-  const [form, setForm] = useState({ ...emptyCheckout, cep: initialCep || "" });
+  const [form, setForm] = useState({
+    ...emptyCheckout,
+    cep: initialCep || "",
+    modalidade_frete: cart?.modalidade_frete || "economica",
+  });
   const [localCart, setLocalCart] = useState(cart);
   const [error, setError] = useState("");
   const quoteMatches =
@@ -269,14 +273,20 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
     digits(form.cep) === digits(localCart.frete.cep) &&
     localCart.modalidade_frete === form.modalidade_frete;
   const field = (name, value) => setForm((old) => ({ ...old, [name]: value }));
-  const quote = async () => {
+  const quote = async (mode = form.modalidade_frete) => {
     setError("");
     try {
-      setLocalCart(await onShipping(form.cep, form.modalidade_frete));
+      setLocalCart(await onShipping(form.cep, mode));
     } catch (e) {
       setError(e.message);
     }
   };
+  const selectShipping = (mode) => {
+    field("modalidade_frete", mode);
+    if (digits(form.cep).length === 8) quote(mode);
+  };
+  const quotedCep =
+    localCart?.frete && digits(form.cep) === digits(localCart.frete.cep);
   const submit = async (event) => {
     event.preventDefault();
     setError("");
@@ -357,37 +367,61 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
                 placeholder="ana@exemplo.com"
               />
             </label>
-            <div className="field-pair">
-              <label>
-                CEP
-                <input
-                  inputMode="numeric"
-                  required
-                  pattern="[0-9]{5}-?[0-9]{3}"
-                  value={form.cep}
-                  onChange={(e) => field("cep", e.target.value)}
-                  placeholder="01001-000"
-                />
-              </label>
-              <label>
-                Modalidade
-                <select
-                  value={form.modalidade_frete}
-                  onChange={(e) => field("modalidade_frete", e.target.value)}
-                >
-                  <option value="economica">Econômica</option>
-                  <option value="expressa">Expressa</option>
-                </select>
-              </label>
-            </div>
+            <label>
+              CEP para entrega
+              <input
+                inputMode="numeric"
+                required
+                pattern="[0-9]{5}-?[0-9]{3}"
+                value={form.cep}
+                onChange={(e) => field("cep", e.target.value)}
+                placeholder="01001-000"
+              />
+            </label>
             <button
               type="button"
               className="text-button"
-              onClick={quote}
+              onClick={() => quote()}
               disabled={busy || digits(form.cep).length !== 8}
             >
-              Calcular entrega desta modalidade
+              Calcular opções de entrega
             </button>
+            <fieldset className="freight-options">
+              <legend>Escolha o frete</legend>
+              {[
+                ["economica", "Econômico"],
+                ["expressa", "Expresso"],
+              ].map(([mode, label]) => {
+                const option = quotedCep ? localCart.frete.opcoes[mode] : null;
+                return (
+                  <label className="freight-option" key={mode}>
+                    <input
+                      type="radio"
+                      name="modalidade_frete"
+                      value={mode}
+                      checked={form.modalidade_frete === mode}
+                      onChange={() => selectShipping(mode)}
+                      disabled={busy || digits(form.cep).length !== 8}
+                    />
+                    <span>
+                      <strong>{label}</strong>
+                      <small>
+                        {option
+                          ? `${option.prazo_dias_uteis} dias úteis`
+                          : "Calcule pelo CEP"}
+                      </small>
+                    </span>
+                    <b>
+                      {option
+                        ? option.gratis
+                          ? "Grátis"
+                          : money(option.valor_centavos)
+                        : "—"}
+                    </b>
+                  </label>
+                );
+              })}
+            </fieldset>
             <label>
               Endereço fictício
               <input
