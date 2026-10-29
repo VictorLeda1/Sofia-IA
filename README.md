@@ -1,6 +1,6 @@
 # Sofia Prohall · teste técnico
 
-API Django + DRF para uma consultora capilar com Gemini. Esta é a etapa de **backend** do projeto. A interface React fica em `frontend/` no mesmo repositório, em etapa separada. Todo pedido, frete, estoque e PIX aqui é fictício.
+Aplicação demonstrativa da consultora capilar Sofia: API Django + DRF e interface React no mesmo repositório, em pastas separadas. Todo pedido, frete, estoque e PIX aqui é fictício.
 
 ## Estrutura
 
@@ -11,6 +11,8 @@ API Django + DRF para uma consultora capilar com Gemini. Esta é a etapa de **ba
 - `backend/sofia_ai/`: prompt em arquivo próprio, declarações e execução de ferramentas, orquestração do Gemini.
 - `backend/api/`: rotas DRF, validação HTTP e documentação OpenAPI.
 - `backend/tests/`: casos exatos do desafio e fluxo de API sem banco.
+- `frontend/`: chat React, cards de produto, sacola, checkout, PIX e painel de debug. Veja `frontend/README.md`.
+- `agents/`: instruções reutilizáveis dos agentes de backend e frontend; o agente de frontend usa o Impeccable instalado no projeto.
 
 ## Executar no Windows (PowerShell)
 
@@ -32,6 +34,16 @@ python manage.py check
 python manage.py test
 python manage.py runserver 8000
 ```
+
+Em outro terminal, rode o frontend:
+
+```powershell
+cd 'C:\Users\victo\projetos\Sofia IA\frontend'
+npm install
+npm run dev
+```
+
+Abra `http://127.0.0.1:5173`. O Vite encaminha `/api` ao Django; o navegador mantém o cookie de sessão. O frontend não lê a chave Gemini.
 
 Não rode `migrate`: a API não usa banco, models ou tabelas. Abra [Swagger](http://127.0.0.1:8000/api/docs/) para ver e testar os endpoints. O schema também está em `/api/schema/` e em `backend/schema.yaml` como referência gerada.
 
@@ -79,8 +91,10 @@ O pedido pode ser criado por essa rota ou pela Sofia usando `finalizar_pedido`. 
 - O estoque é fictício; `PH-010` tem duas unidades para testar escassez verdadeira.
 - O peso de frete de `PH-007` foi estimado em 300 g porque o cadastro da loja informa 50 g para uma máscara de 250 g. O catálogo marca `peso_estimado: true`.
 - O modo de uso da `PH-007` não está detalhado na loja, e o da `PH-014` é ambíguo sobre enxágue. A Sofia deve reconhecer esses limites.
-- Não há pagamento real, integração logística, persistência, autenticação de clientes ou frontend nesta etapa. O vídeo e as três conversas exportadas dependem da chave e da etapa de interface.
+- Não há pagamento real, integração logística, persistência ou autenticação de clientes. O vídeo e as três conversas exportadas dependem da chave Gemini para demonstrar uma venda real do começo ao fim.
 
 ## Verificação
 
 `python manage.py test` cobre os seis resultados da seção 5.6, o cálculo da seção 6.2, cupom que deixa de valer após remoção, estoque, CEP inválido, expiração/renovação do PIX, fluxo HTTP e uma chamada simulada de ferramenta do Gemini. `python manage.py spectacular --validate --file schema.yaml` valida o Swagger.
+
+No frontend, `npm run build` verifica a compilação de produção. O agente de frontend usou o [Impeccable](https://impeccable.style/#downloads) para revisar a interface; instruções de instalação e uso estão em `frontend/README.md`.

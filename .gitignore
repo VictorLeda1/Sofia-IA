@@ -4,6 +4,11 @@ frontend/.env
 __pycache__/
 *.py[cod]
 .venv/
+node_modules/
+frontend/dist/
+frontend/.agents/
+frontend/.codex/
+frontend/.impeccable/
 .pytest_cache/
 .coverage
 htmlcov/
