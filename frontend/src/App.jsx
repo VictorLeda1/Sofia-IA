@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Bug,
@@ -592,7 +592,7 @@ export default function App() {
   const [checkout, setCheckout] = useState(false);
   const [pix, setPix] = useState(null);
   const [debugOpen, setDebugOpen] = useState(false);
-  const bottomRef = useRef(null);
+  const conversationRef = useRef(null);
 
   const refresh = async () => {
     const data = await request("/session/");
@@ -622,8 +622,9 @@ export default function App() {
       cancelled = true;
     };
   }, []);
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  useLayoutEffect(() => {
+    const conversation = conversationRef.current;
+    if (conversation) conversation.scrollTop = conversation.scrollHeight;
   }, [session.messages, pendingMessage, typing, error]);
   useEffect(() => {
     if (!pix || pix.status !== "aguardando_pagamento" || !pix.pix) return;
@@ -789,7 +790,7 @@ export default function App() {
               <span /> Online
             </span>
           </div>
-          <div className="conversation">
+          <div className="conversation" ref={conversationRef}>
             {messages.map((m, index) => (
               <div key={index}>
                 <div className={`message ${m.role}`}>
@@ -825,7 +826,6 @@ export default function App() {
                 {error}
               </div>
             )}
-            <div ref={bottomRef} />
           </div>
           <form className="composer" onSubmit={send}>
             <input
