@@ -1,4 +1,4 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from unittest.mock import patch
 
 
@@ -26,6 +26,7 @@ class ApiSmoke(SimpleTestCase):
         self.assertTrue(pix.json()["qr_data_url"].startswith("data:image/png;base64,"))
         self.assertEqual(self.client.post(f"/api/orders/{order_id}/simulate-payment/").json()["status"], "pago")
 
+    @override_settings(GEMINI_API_KEY="")
     def test_chat_requires_backend_key(self):
         response = self.client.post("/api/chat/", {"message": "Oi"}, content_type="application/json")
         self.assertEqual(response.status_code, 503)
@@ -45,3 +46,19 @@ class ApiSmoke(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["active_order"]["qr_data_url"].startswith("data:image/png;base64,"))
         self.assertTrue(response.json()["active_order"]["pix"]["texto"].endswith("|NAO-PAGAVEL"))
+
+    def test_chat_exposes_checkout_preview_before_order(self):
+        self.client.post("/api/cart/items/", {"id": "PH-004", "quantidade": 2}, content_type="application/json")
+
+        def simulated_preview(session, message):
+            from commerce.service import prepare_checkout
+            preview = prepare_checkout(session, {"nome": "Ana Teste", "email": "ana@example.com", "cep": "01001-000", "endereco": "Rua Exemplo", "numero": "10"})
+            return {"text": "Você prefere Econômico ou Expresso?", "cards": [], "debug": [{"name": "preparar_checkout", "args": {}, "result": preview}]}
+
+        with patch("api.views.chat", side_effect=simulated_preview):
+            response = self.client.post("/api/chat/", {"message": "Pode fechar"}, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()["active_order"])
+        self.assertEqual(response.json()["checkout_preview"]["cliente"]["nome"], "Ana Teste")
+        self.assertEqual(response.json()["checkout_preview"]["resumo"]["items"][0]["quantidade"], 2)
+        self.assertEqual(self.client.get("/api/session/").json()["messages"][-1]["checkout_preview"]["cliente"]["cep"], "01001000")

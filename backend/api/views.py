@@ -75,7 +75,7 @@ class ProductView(SessionView):
 class StateView(SessionView):
     @extend_schema(responses=OpenApiTypes.OBJECT, tags=["Sessão"], summary="Estado atual da conversa")
     def get(self, request):
-        return Response({"cart": totals(self.state), "messages": self.state["messages"], "debug": self.state["debug"][-30:], "orders": [{"id": o["id"], "status": get_order(self.state, o["id"])["status"]} for o in self.state["orders"].values()]})
+        return Response({"cart": totals(self.state), "messages": self.state["messages"], "checkout_preparado": bool(self.state.get("checkout_draft")), "debug": self.state["debug"][-30:], "orders": [{"id": o["id"], "status": get_order(self.state, o["id"])["status"]} for o in self.state["orders"].values()]})
 
 
 class ChatView(SessionView):
@@ -86,7 +86,7 @@ class ChatView(SessionView):
         message = serializer.validated_data["message"].strip()
         if not message:
             raise ValidationError({"message": "Mensagem vazia."})
-        before = {key: copy.deepcopy(self.state[key]) for key in ("cart", "coupon", "cep", "shipping_mode", "orders")}
+        before = {key: copy.deepcopy(self.state[key]) for key in ("cart", "coupon", "cep", "shipping_mode", "checkout_draft", "orders")}
         try:
             result = chat(self.state, message)
         except RuntimeError as exc:
@@ -96,9 +96,12 @@ class ChatView(SessionView):
             self.state.update(before)
             logger.exception("Falha ao consultar Gemini")
             return Response({"detail": "Falha ao consultar o Gemini. Tente novamente."}, status=status.HTTP_502_BAD_GATEWAY)
-        self.state["messages"].extend([{"role": "user", "text": message}, {"role": "assistant", "text": result["text"], "cards": [p["id"] for p in result["cards"]]}])
+        preview = next((event["result"] for event in reversed(result["debug"]) if event["name"] == "preparar_checkout" and isinstance(event["result"], dict) and "resumo" in event["result"]), None)
+        preview = preview if self.state.get("checkout_draft") else None
+        self.state["messages"].extend([{"role": "user", "text": message}, {"role": "assistant", "text": result["text"], "cards": [p["id"] for p in result["cards"]], "checkout_preview": preview}])
         latest = list(self.state["orders"].values())[-1] if self.state["orders"] else None
-        return Response({**result, "cart": totals(self.state), "active_order": order_view(get_order(self.state, latest["id"])) if latest else None})
+        changed_order = latest and (latest["id"] not in before["orders"] or latest["pix"] != before["orders"][latest["id"]]["pix"])
+        return Response({**result, "cart": totals(self.state), "checkout_preview": preview, "active_order": order_view(get_order(self.state, latest["id"])) if latest and changed_order else None})
 
 
 class CartItemsView(SessionView):

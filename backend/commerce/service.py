@@ -13,7 +13,7 @@ _sessions = {}
 
 
 def new_session():
-    return {"id": str(uuid4()), "cart": {}, "coupon": None, "cep": None, "shipping_mode": "economica", "orders": {}, "history": [], "messages": [], "debug": []}
+    return {"id": str(uuid4()), "cart": {}, "coupon": None, "cep": None, "shipping_mode": "economica", "checkout_draft": None, "orders": {}, "history": [], "messages": [], "debug": []}
 
 
 def get_session(session_id=None):
@@ -125,6 +125,7 @@ def add_item(session, product_id, quantity=1):
     if new_quantity > product["estoque_teste"]:
         raise ValueError(f"Estoque de teste insuficiente: {product['estoque_teste']} unidade(s).")
     session["cart"][product_id] = new_quantity
+    session["checkout_draft"] = None
     return totals(session)
 
 
@@ -139,6 +140,7 @@ def remove_item(session, product_id, quantity=None):
         del session["cart"][product_id]
     else:
         session["cart"][product_id] -= quantity
+    session["checkout_draft"] = None
     had_coupon = bool(session["coupon"])
     result = totals(session)
     if had_coupon and not session["coupon"]:
@@ -152,12 +154,13 @@ def apply_coupon(session, code):
     if cart_summary(session)["subtotal_centavos"] < 15000:
         raise ValueError("PROHALL10 exige subtotal mínimo de R$ 150,00.")
     session["coupon"] = "PROHALL10"
+    session["checkout_draft"] = None
     return totals(session)
 
 
-def finalize_order(session, data):
-    if not session["cart"]:
-        raise ValueError("O carrinho está vazio.")
+def validate_checkout_data(data):
+    if not isinstance(data, dict):
+        raise ValueError("Dados do pedido inválidos.")
     name, email, cep, address, number, complement, mode = (data.get(key) for key in ("nome", "email", "cep", "endereco", "numero", "complemento", "modalidade_frete"))
     if not isinstance(name, str) or not 2 <= len(name.strip()) <= 100:
         raise ValueError("Informe um nome fictício válido.")
@@ -173,14 +176,52 @@ def finalize_order(session, data):
         raise ValueError("Escolha frete Econômico ou Expresso.")
     if not zone_for_cep(cep):
         raise ValueError("CEP inválido. Informe 8 dígitos de uma faixa atendida, com ou sem hífen.")
+    return {"nome": name.strip(), "email": email.strip(), "cep": cep.replace("-", ""), "endereco": address.strip(), "numero": str(number).strip(), "complemento": (complement or "").strip(), "modalidade_frete": mode}
+
+
+def prepare_checkout(session, data):
+    if not session["cart"]:
+        raise ValueError("O carrinho está vazio.")
+    if not isinstance(data, dict):
+        raise ValueError("Dados do pedido inválidos.")
+    customer = validate_checkout_data({**data, "modalidade_frete": "economica"})
+    summary = totals(session, customer["cep"], "economica")
+    session["checkout_draft"] = {key: value for key, value in customer.items() if key != "modalidade_frete"}
+    session["cep"] = customer["cep"]
+    totals_by_shipping = {
+        mode: {
+            "frete_centavos": option["valor_centavos"],
+            "total_pix_centavos": summary["base_produtos_centavos"] - summary["desconto_pix_centavos"] + option["valor_centavos"],
+            "prazo_dias_uteis": option["prazo_dias_uteis"],
+        }
+        for mode, option in summary["frete"]["opcoes"].items()
+    }
+    return {"cliente": session["checkout_draft"], "resumo": summary, "totais_por_frete": totals_by_shipping, "aviso": "Pedido ainda não criado. Apresente os valores e pergunte qual frete a cliente prefere."}
+
+
+def confirm_shipping_and_generate_pix(session, mode):
+    if mode not in ("economica", "expressa"):
+        raise ValueError("Escolha frete Econômico ou Expresso.")
+    if not session.get("checkout_draft"):
+        raise ValueError("Peça os dados fictícios e prepare o pedido antes de escolher o frete.")
+    order = finalize_order(session, {**session["checkout_draft"], "modalidade_frete": mode})
+    return generate_pix(session, order["id"])
+
+
+def finalize_order(session, data):
+    if not session["cart"]:
+        raise ValueError("O carrinho está vazio.")
+    customer = validate_checkout_data(data)
+    cep, mode = customer["cep"], customer["modalidade_frete"]
     summary = totals(session, cep, mode)
-    session["cep"] = cep.replace("-", "")
+    session["cep"] = cep
     session["shipping_mode"] = mode
     order_id = f"PH-TESTE-{uuid4().hex[:8].upper()}"
-    order = {"id": order_id, "status": "aguardando_pagamento", "criado_em": datetime.now(timezone.utc).isoformat(), "cliente": {"nome": name.strip(), "email": email.strip(), "cep": session["cep"], "endereco": address.strip(), "numero": str(number).strip(), "complemento": (complement or "").strip()}, "resumo": summary, "pix": None}
+    order = {"id": order_id, "status": "aguardando_pagamento", "criado_em": datetime.now(timezone.utc).isoformat(), "cliente": {key: value for key, value in customer.items() if key != "modalidade_frete"}, "resumo": summary, "pix": None}
     session["orders"][order_id] = order
     session["cart"] = {}
     session["coupon"] = None
+    session["checkout_draft"] = None
     return order
 
 

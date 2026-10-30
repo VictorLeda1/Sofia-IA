@@ -2,8 +2,9 @@ from datetime import datetime, timedelta, timezone
 from unittest import TestCase
 
 from commerce.service import (
-    add_item, apply_coupon, finalize_order, generate_pix, get_order, new_session,
-    product_amounts, quote_shipping, remove_item, simulate_payment, totals,
+    add_item, apply_coupon, confirm_shipping_and_generate_pix, finalize_order,
+    generate_pix, get_order, new_session, prepare_checkout, product_amounts,
+    quote_shipping, remove_item, simulate_payment, totals,
     zone_for_cep,
 )
 
@@ -54,6 +55,32 @@ class FreightCases(TestCase):
 
 
 class CartAndOrder(TestCase):
+    def test_chat_checkout_waits_for_freight_choice_then_generates_pix(self):
+        session = new_session()
+        add_item(session, "PH-004", 2)
+        data = {"nome": "Ana Teste", "email": "ana@example.com", "cep": "01001-000", "endereco": "Rua Exemplo", "numero": "10"}
+        preview = prepare_checkout(session, data)
+        self.assertFalse(session["orders"])
+        self.assertEqual(preview["resumo"]["subtotal_centavos"], totals(session)["subtotal_centavos"])
+        self.assertGreater(preview["totais_por_frete"]["expressa"]["total_pix_centavos"], preview["totais_por_frete"]["economica"]["total_pix_centavos"])
+        with self.assertRaisesRegex(ValueError, "Escolha frete"):
+            confirm_shipping_and_generate_pix(session, "cartao")
+        order = confirm_shipping_and_generate_pix(session, "expressa")
+        self.assertEqual(order["resumo"]["modalidade_frete"], "expressa")
+        self.assertEqual(order["resumo"]["total_pix_centavos"], preview["totais_por_frete"]["expressa"]["total_pix_centavos"])
+        self.assertTrue(order["pix"]["texto"].endswith("|NAO-PAGAVEL"))
+        self.assertFalse(session["cart"])
+        self.assertIsNone(session["checkout_draft"])
+
+    def test_cart_change_invalidates_checkout_preview(self):
+        session = new_session()
+        add_item(session, "PH-004", 1)
+        prepare_checkout(session, {"nome": "Ana Teste", "email": "ana@example.com", "cep": "01001-000", "endereco": "Rua Exemplo", "numero": "10"})
+        add_item(session, "PH-004", 1)
+        self.assertIsNone(session["checkout_draft"])
+        with self.assertRaisesRegex(ValueError, "prepare o pedido"):
+            confirm_shipping_and_generate_pix(session, "economica")
+
     def test_stock_coupon_removal_and_limits(self):
         session = new_session()
         add_item(session, "PH-010", 2)

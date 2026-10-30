@@ -91,6 +91,44 @@ function PriceLine({ label, value, strong = false, negative = false }) {
   );
 }
 
+function CheckoutPreview({ preview, onSelect, busy, active }) {
+  const { cliente, resumo, totais_por_frete: shipping } = preview;
+  return (
+    <section className="chat-checkout-preview" aria-label="Resumo do pedido de teste">
+      <strong>Resumo antes de finalizar</strong>
+      <small>
+        {cliente.nome} · {cliente.email} · CEP {cliente.cep}
+        <br />
+        {cliente.endereco}, {cliente.numero}
+        {cliente.complemento ? ` · ${cliente.complemento}` : ""}
+      </small>
+      <div className="preview-items">
+        {resumo.items.map((item) => (
+          <div key={item.id}>
+            <span>{item.quantidade}× {item.nome}</span>
+            <b>{money(item.total_centavos)}</b>
+          </div>
+        ))}
+      </div>
+      <PriceLine label="Subtotal" value={resumo.subtotal_centavos} />
+      {resumo.cupom && (
+        <PriceLine label={`Cupom ${resumo.cupom}`} value={resumo.desconto_cupom_centavos} negative />
+      )}
+      <PriceLine label="Desconto PIX" value={resumo.desconto_pix_centavos} negative />
+      <p>Qual frete você prefere?</p>
+      <div className="preview-shipping">
+        {[["economica", "Econômico"], ["expressa", "Expresso"]].map(([mode, label]) => (
+          <button key={mode} type="button" disabled={busy || !active} onClick={() => onSelect(label)}>
+            <span><strong>{label}</strong><small>{shipping[mode].prazo_dias_uteis} dias úteis · frete {shipping[mode].frete_centavos ? money(shipping[mode].frete_centavos) : "grátis"}</small></span>
+            <b>{money(shipping[mode].total_pix_centavos)}</b>
+          </button>
+        ))}
+      </div>
+      <small>Pedido e pagamento são apenas simulações.</small>
+    </section>
+  );
+}
+
 function Cart({
   cart,
   onAdd,
@@ -704,9 +742,8 @@ export default function App() {
         body: { cep, modalidade_frete },
       }),
     );
-  const send = async (event) => {
-    event.preventDefault();
-    const text = message.trim();
+  const sendMessage = async (value) => {
+    const text = value.trim();
     if (!text || typing) return;
     setMessage("");
     setError("");
@@ -732,6 +769,10 @@ export default function App() {
     } finally {
       setTyping(false);
     }
+  };
+  const send = (event) => {
+    event.preventDefault();
+    sendMessage(message);
   };
   const createOrder = async (data) => {
     const created = await transact(() =>
@@ -844,6 +885,14 @@ export default function App() {
                         />
                       ))}
                   </div>
+                )}
+                {m.checkout_preview && (
+                  <CheckoutPreview
+                    preview={m.checkout_preview}
+                    onSelect={(label) => sendMessage(`Quero o frete ${label}`)}
+                    busy={typing || busy}
+                    active={index === messages.length - 1 && session.checkout_preparado}
+                  />
                 )}
               </div>
             ))}
