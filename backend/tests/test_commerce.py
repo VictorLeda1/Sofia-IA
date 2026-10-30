@@ -16,6 +16,7 @@ class FreightCases(TestCase):
         self.assertEqual(a["opcoes"]["economica"]["valor_centavos"], 2290)
         self.assertEqual(a["opcoes"]["expressa"]["valor_centavos"], 3590)
         self.assertEqual(a["faltam_frete_gratis_centavos"], 4900)
+        self.assertEqual(a["limite_frete_gratis_centavos"], 29900)
         self.assertEqual(a["opcoes"]["economica"]["prazo_dias_uteis"], "3 a 5")
         self.assertEqual(a["opcoes"]["expressa"]["prazo_dias_uteis"], "1 a 2")
 
@@ -24,6 +25,7 @@ class FreightCases(TestCase):
         self.assertEqual(b["opcoes"]["economica"]["valor_centavos"], 9990)
         self.assertEqual(b["opcoes"]["expressa"]["valor_centavos"], 16190)
         self.assertEqual(b["faltam_frete_gratis_centavos"], 1900)
+        self.assertEqual(b["limite_frete_gratis_centavos"], 39900)
 
         c = quote_shipping("40020-000", 800, 42000)
         self.assertEqual((c["zona"], c["faixa"]), ("Z4", "até 1 kg"))
@@ -55,6 +57,17 @@ class FreightCases(TestCase):
 
 
 class CartAndOrder(TestCase):
+    def test_chat_preview_matches_free_shipping_cart_example(self):
+        session = new_session()
+        add_item(session, "PH-001", 4)
+        preview = prepare_checkout(session, {"nome": "Victor Teste", "email": "victor@example.com", "cep": "18000-000", "endereco": "Rua X", "numero": "123"})
+        self.assertEqual(preview["resumo"]["subtotal_centavos"], 107960)
+        self.assertEqual(preview["resumo"]["desconto_pix_centavos"], 5398)
+        self.assertEqual(preview["totais_por_frete"]["economica"]["frete_centavos"], 0)
+        self.assertEqual(preview["totais_por_frete"]["economica"]["total_pix_centavos"], 102562)
+        self.assertEqual(preview["totais_por_frete"]["expressa"]["frete_centavos"], 4790)
+        self.assertEqual(preview["totais_por_frete"]["expressa"]["total_pix_centavos"], 107352)
+
     def test_chat_checkout_waits_for_freight_choice_then_generates_pix(self):
         session = new_session()
         add_item(session, "PH-004", 2)

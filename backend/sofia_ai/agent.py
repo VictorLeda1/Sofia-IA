@@ -36,9 +36,9 @@ TOOLS = [
     declaration("ver_carrinho", "Consulta itens, subtotal, cupom, base e peso do carrinho."),
     declaration("aplicar_cupom", "Valida e aplica o cupom informado.", {"codigo": string("Código da cliente")}, ["codigo"]),
     declaration("calcular_frete", "Calcula opções e prazos de frete usando o carrinho atual.", {"cep": string("CEP com 8 dígitos")}, ["cep"]),
-    declaration("preparar_checkout", "Valida dados fictícios, guarda um rascunho e devolve subtotal, descontos, total e os dois fretes; ainda não cria pedido. Use antes de perguntar a modalidade.", {"nome": string("Nome fictício"), "email": string("E-mail fictício"), "cep": string("CEP"), "endereco": string("Endereço fictício"), "numero": string("Número"), "complemento": string("Complemento opcional")}, ["nome", "email", "cep", "endereco", "numero"]),
+    declaration("preparar_checkout", "Valida os dados de entrega, guarda um rascunho e devolve subtotal, descontos, total e os dois fretes; ainda não cria pedido. Use antes de perguntar a modalidade.", {"nome": string("Nome"), "email": string("E-mail"), "cep": string("CEP"), "endereco": string("Endereço"), "numero": string("Número"), "complemento": string("Complemento opcional")}, ["nome", "email", "cep", "endereco", "numero"]),
     declaration("confirmar_frete", "Depois que a cliente escolhe Econômico ou Expresso, fecha o rascunho e gera automaticamente o PIX falso. Não chame antes da escolha explícita.", {"modalidade_frete": string("economica ou expressa")}, ["modalidade_frete"]),
-    declaration("finalizar_pedido", "Cria pedido fictício após receber apenas dados fictícios da cliente.", {"nome": string("Nome fictício"), "email": string("E-mail fictício"), "cep": string("CEP"), "endereco": string("Endereço fictício"), "numero": string("Número"), "complemento": string("Complemento opcional"), "modalidade_frete": string("economica ou expressa")}, ["nome", "email", "cep", "endereco", "numero", "modalidade_frete"]),
+    declaration("finalizar_pedido", "Cria pedido de teste após receber os dados de entrega da cliente.", {"nome": string("Nome"), "email": string("E-mail"), "cep": string("CEP"), "endereco": string("Endereço"), "numero": string("Número"), "complemento": string("Complemento opcional"), "modalidade_frete": string("economica ou expressa")}, ["nome", "email", "cep", "endereco", "numero", "modalidade_frete"]),
     declaration("gerar_pix", "Gera PIX obviamente falso para um pedido da sessão.", {"pedido_id": string("ID do pedido")}, ["pedido_id"]),
     declaration("consultar_pedido", "Consulta status do pedido e expiração do PIX.", {"pedido_id": string("ID do pedido")}, ["pedido_id"]),
 ]
@@ -51,7 +51,7 @@ def execute_tool(session, name, args, card_ids):
         return search_products(args.get("termo"), args.get("categoria"), args.get("uso"))[:8]
     if name == "detalhar_produto":
         product = detail_product(args.get("id"))
-        card_ids.add(product["id"])
+        card_ids[product["id"]] = None
         return product
     if name == "adicionar_ao_carrinho":
         return add_item(session, args.get("id"), args.get("quantidade"))
@@ -110,7 +110,7 @@ def chat(session, message):
         "pedidos": [{"id": order["id"], "status": get_order(session, order["id"])["status"]} for order in session["orders"].values()],
     }
     contents = [*trim_history(session["history"]), types.Content(role="user", parts=[types.Part.from_text(text=message)])]
-    cards = set()
+    cards = {}
     debug = []
     for _ in range(10):
         response = client.models.generate_content(

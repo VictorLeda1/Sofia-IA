@@ -9,6 +9,35 @@ from sofia_ai.agent import chat, trim_history
 
 
 class GeminiToolLoop(SimpleTestCase):
+    @override_settings(GEMINI_API_KEY="chave-ficticia", GEMINI_MODEL="gemini-3.8-flash")
+    def test_blond_with_highlights_asks_application_then_fragility_separately(self):
+        calls = []
+
+        def generate_content(**kwargs):
+            calls.append(kwargs)
+            instruction = kwargs["config"].system_instruction
+            self.assertIn("Para \"tenho cabelo loiro com luzes e quero alisar\"", instruction)
+            self.assertIn("não faça essas duas perguntas juntas", instruction)
+            answer = (
+                "Para orientar com segurança: a aplicação será em casa ou com profissional?"
+                if len(calls) == 1 else
+                "Entendi. Seus fios estão fragilizados ou quebradiços?"
+            )
+            return SimpleNamespace(candidates=[SimpleNamespace(content=types.Content(role="model", parts=[types.Part.from_text(text=answer)]))])
+
+        fake_client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+        with patch("sofia_ai.agent.genai.Client", return_value=fake_client):
+            session = new_session()
+            first = chat(session, "Tenho cabelo loiro com luzes, muito frizz e quero alisar.")
+            second = chat(session, "Com um profissional.")
+
+        self.assertEqual(first["text"].count("?"), 1)
+        self.assertIn("casa ou com profissional?", first["text"])
+        self.assertNotIn("fragilizados", first["text"])
+        self.assertEqual(second["text"].count("?"), 1)
+        self.assertIn("fragilizados ou quebradiços?", second["text"])
+        self.assertNotIn("casa ou com profissional", second["text"])
+
     def test_history_keeps_function_calls_with_their_responses(self):
         history = []
         for index in range(12):

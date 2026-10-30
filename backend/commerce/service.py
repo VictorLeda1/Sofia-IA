@@ -76,7 +76,7 @@ def quote_shipping(cep, items_weight_g, base_cents):
         standard = row[band] if band < 4 else row[3] + extra_kg * row[4]
         free = mode == "economica" and base_cents >= threshold
         options[mode] = {"valor_centavos": 0 if free else standard, "prazo_dias_uteis": row[5], "gratis": free}
-    return {"cep": cep.replace("-", ""), "zona": zone, "peso_cobrado_g": charged, "faixa": ("até 0,5 kg", "até 1 kg", "até 2 kg", "até 5 kg", "acima de 5 kg")[band], "kg_adicionais": extra_kg, "faltam_frete_gratis_centavos": max(0, threshold - base_cents), "opcoes": options}
+    return {"cep": cep.replace("-", ""), "zona": zone, "peso_cobrado_g": charged, "faixa": ("até 0,5 kg", "até 1 kg", "até 2 kg", "até 5 kg", "acima de 5 kg")[band], "kg_adicionais": extra_kg, "limite_frete_gratis_centavos": threshold, "faltam_frete_gratis_centavos": max(0, threshold - base_cents), "opcoes": options}
 
 
 def product_amounts(subtotal, coupon=None):
@@ -163,11 +163,11 @@ def validate_checkout_data(data):
         raise ValueError("Dados do pedido inválidos.")
     name, email, cep, address, number, complement, mode = (data.get(key) for key in ("nome", "email", "cep", "endereco", "numero", "complemento", "modalidade_frete"))
     if not isinstance(name, str) or not 2 <= len(name.strip()) <= 100:
-        raise ValueError("Informe um nome fictício válido.")
+        raise ValueError("Informe um nome válido.")
     if not isinstance(email, str) or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email) or len(email) > 150:
-        raise ValueError("Informe um e-mail fictício válido.")
+        raise ValueError("Informe um e-mail válido.")
     if not isinstance(address, str) or not 3 <= len(address.strip()) <= 180:
-        raise ValueError("Informe um endereço fictício válido.")
+        raise ValueError("Informe um endereço válido.")
     if not isinstance(number, (str, int)) or not str(number).strip() or len(str(number)) > 20:
         raise ValueError("Informe o número do endereço.")
     if complement is not None and (not isinstance(complement, str) or len(complement) > 120):
@@ -203,7 +203,7 @@ def confirm_shipping_and_generate_pix(session, mode):
     if mode not in ("economica", "expressa"):
         raise ValueError("Escolha frete Econômico ou Expresso.")
     if not session.get("checkout_draft"):
-        raise ValueError("Peça os dados fictícios e prepare o pedido antes de escolher o frete.")
+        raise ValueError("Peça os dados de entrega e prepare o pedido antes de escolher o frete.")
     order = finalize_order(session, {**session["checkout_draft"], "modalidade_frete": mode})
     return generate_pix(session, order["id"])
 
