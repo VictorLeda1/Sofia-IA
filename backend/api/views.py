@@ -21,7 +21,7 @@ from api.serializers import (
 from catalog.service import PRODUCTS, current_price_cents, detail_product
 from commerce.service import (
     add_item, apply_coupon, finalize_order, generate_pix, get_order, get_session,
-    remove_item, simulate_payment, totals, quote_shipping,
+    money, remove_item, simulate_payment, totals, quote_shipping,
 )
 from sofia_ai.agent import chat
 
@@ -60,6 +60,25 @@ def order_view(order):
     return response
 
 
+def checkout_message(preview):
+    summary = preview["resumo"]
+    shipping = preview["totais_por_frete"]
+    lines = [
+        "Confira o resumo calculado do pedido abaixo:",
+        f"Subtotal: {money(summary['subtotal_centavos'])}.",
+    ]
+    if summary["desconto_cupom_centavos"]:
+        lines.append(f"Desconto do cupom {summary['cupom']}: {money(summary['desconto_cupom_centavos'])}.")
+    lines.append(f"Desconto no PIX: {money(summary['desconto_pix_centavos'])}.")
+    lines.append(f"Produtos no PIX, após descontos: {money(summary['base_produtos_centavos'] - summary['desconto_pix_centavos'])}.")
+    for mode, label in (("economica", "Econômico"), ("expressa", "Expresso")):
+        option = shipping[mode]
+        free = " (grátis)" if option["frete_centavos"] == 0 else ""
+        lines.append(f"Frete {label}: {money(option['frete_centavos'])}{free}, {option['prazo_dias_uteis']} dias úteis. Total do pedido no PIX: {money(option['total_pix_centavos'])}.")
+    lines.append("Você prefere frete Econômico ou Expresso?")
+    return "\n".join(lines)
+
+
 class ProductsView(SessionView):
     @extend_schema(operation_id="list_products", responses=OpenApiTypes.OBJECT, tags=["Catálogo"], summary="Listar os 15 produtos")
     def get(self, request):
@@ -76,6 +95,12 @@ class StateView(SessionView):
     @extend_schema(responses=OpenApiTypes.OBJECT, tags=["Sessão"], summary="Estado atual da conversa")
     def get(self, request):
         return Response({"cart": totals(self.state), "messages": self.state["messages"], "checkout_preparado": bool(self.state.get("checkout_draft")), "debug": self.state["debug"][-30:], "orders": [{"id": o["id"], "status": get_order(self.state, o["id"])["status"]} for o in self.state["orders"].values()]})
+
+
+class DebugToolsView(SessionView):
+    @extend_schema(responses=OpenApiTypes.OBJECT, tags=["Debug"], summary="Ferramentas chamadas nesta conversa")
+    def get(self, request):
+        return Response({"calls": [{"name": event["name"], "args": event["args"]} for event in self.state["debug"]]})
 
 
 class ChatView(SessionView):
@@ -98,9 +123,16 @@ class ChatView(SessionView):
             return Response({"detail": "Falha ao consultar o Gemini. Tente novamente."}, status=status.HTTP_502_BAD_GATEWAY)
         preview = next((event["result"] for event in reversed(result["debug"]) if event["name"] == "preparar_checkout" and isinstance(event["result"], dict) and "resumo" in event["result"]), None)
         preview = preview if self.state.get("checkout_draft") else None
-        self.state["messages"].extend([{"role": "user", "text": message}, {"role": "assistant", "text": result["text"], "cards": [p["id"] for p in result["cards"]], "checkout_preview": preview}])
+        if preview:
+            result["text"] = checkout_message(preview)
         latest = list(self.state["orders"].values())[-1] if self.state["orders"] else None
         changed_order = latest and (latest["id"] not in before["orders"] or latest["pix"] != before["orders"][latest["id"]]["pix"])
+        if latest and changed_order and latest["pix"] and latest["status"] == "aguardando_pagamento":
+            if latest["id"] not in before["orders"]:
+                result["text"] = f"Pedido {latest['id']} criado e aguardando pagamento. O PIX de teste no valor de {money(latest['resumo']['total_pix_centavos'])} está disponível por 15 minutos. Gostaria de simular o pagamento? Use o botão no PIX exibido na tela."
+            else:
+                result["text"] = f"O PIX de teste do pedido {latest['id']} foi renovado por 15 minutos. Gostaria de simular o pagamento? Use o botão no PIX exibido na tela."
+        self.state["messages"].extend([{"role": "user", "text": message}, {"role": "assistant", "text": result["text"], "cards": [p["id"] for p in result["cards"]], "checkout_preview": preview}])
         return Response({**result, "cart": totals(self.state), "checkout_preview": preview, "active_order": order_view(get_order(self.state, latest["id"])) if latest and changed_order else None})
 
 
