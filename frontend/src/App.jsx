@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
+  ArrowLeft,
   ArrowRight,
   Bug,
   Check,
@@ -34,6 +35,18 @@ const welcome = {
   role: "assistant",
   text: "Oi! Eu sou a Sofia 💕 Me conta: o que você gostaria de melhorar no seu cabelo?",
 };
+
+function FormattedMessage({ text }) {
+  return String(text || "")
+    .split(/(\*\*[\s\S]+?\*\*)/g)
+    .map((part, index) =>
+      part.startsWith("**") && part.endsWith("**") ? (
+        <strong key={index}>{part.slice(2, -2)}</strong>
+      ) : (
+        <span key={index}>{part.replace(/\*\*/g, "")}</span>
+      ),
+    );
+}
 
 function ProductCard({ item, onAdd, busy }) {
   return (
@@ -91,6 +104,18 @@ function PriceLine({ label, value, strong = false, negative = false }) {
   );
 }
 
+function FreeShippingNote({ quote, coupon }) {
+  if (!quote) return null;
+  const base = coupon ? "em produtos após o cupom" : "em produtos";
+  return (
+    <p className="shipping-explanation">
+      {quote.opcoes.economica.gratis
+        ? `Frete Econômico grátis a partir de ${money(quote.limite_frete_gratis_centavos)} ${base} para este CEP.`
+        : `Faltam ${money(quote.faltam_frete_gratis_centavos)} ${base} para o frete Econômico grátis.`}
+    </p>
+  );
+}
+
 function CheckoutPreview({ preview, onSelect, busy, active }) {
   const { cliente, resumo, totais_por_frete: shipping } = preview;
   return (
@@ -115,17 +140,42 @@ function CheckoutPreview({ preview, onSelect, busy, active }) {
         <PriceLine label={`Cupom ${resumo.cupom}`} value={resumo.desconto_cupom_centavos} negative />
       )}
       <PriceLine label="Desconto PIX" value={resumo.desconto_pix_centavos} negative />
+      <PriceLine label="Produtos no PIX" value={resumo.base_produtos_centavos - resumo.desconto_pix_centavos} />
+      <FreeShippingNote quote={resumo.frete} coupon={resumo.cupom} />
       <p>Qual frete você prefere?</p>
       <div className="preview-shipping">
         {[["economica", "Econômico"], ["expressa", "Expresso"]].map(([mode, label]) => (
           <button key={mode} type="button" disabled={busy || !active} onClick={() => onSelect(label)}>
-            <span><strong>{label}</strong><small>{shipping[mode].prazo_dias_uteis} dias úteis · frete {shipping[mode].frete_centavos ? money(shipping[mode].frete_centavos) : "grátis"}</small></span>
-            <b>{money(shipping[mode].total_pix_centavos)}</b>
+            <span><strong>{label}</strong><small>{shipping[mode].prazo_dias_uteis} dias úteis · frete {money(shipping[mode].frete_centavos)}{shipping[mode].frete_centavos === 0 ? " (grátis)" : ""}</small></span>
+            <b>Total do pedido no PIX: {money(shipping[mode].total_pix_centavos)}</b>
           </button>
         ))}
       </div>
       <small>Pedido e pagamento são apenas simulações.</small>
     </section>
+  );
+}
+
+function DebugPage({ calls, error, onBack, onRefresh }) {
+  return (
+    <main className="debug-page">
+      <div className="debug-page-head">
+        <button type="button" className="debug-back" onClick={onBack}><ArrowLeft size={17} /> Voltar para a conversa</button>
+        <button type="button" className="debug-refresh" onClick={onRefresh}>Atualizar</button>
+      </div>
+      <h1>Painel de debug</h1>
+      <p>Ferramentas chamadas pela Sofia nesta conversa e os argumentos enviados em cada chamada.</p>
+      {error && <p className="inline-error" role="alert">{error}</p>}
+      {!error && calls.length === 0 && <p className="debug-empty">Nenhuma ferramenta foi chamada nesta conversa.</p>}
+      <div className="debug-calls">
+        {calls.map((call, index) => (
+          <article className="debug-call" key={index}>
+            <div><span>Chamada {index + 1}</span><strong>{call.name}</strong></div>
+            <pre>{JSON.stringify(call.args || {}, null, 2)}</pre>
+          </article>
+        ))}
+      </div>
+    </main>
   );
 }
 
@@ -255,14 +305,9 @@ function Cart({
             </span>
             <strong>{money(cart.frete.opcoes.expressa.valor_centavos)}</strong>
           </div>
-          {cart.frete.faltam_frete_gratis_centavos > 0 && (
-            <p>
-              Faltam {money(cart.frete.faltam_frete_gratis_centavos)} para a
-              entrega Econômica grátis.
-            </p>
-          )}
         </div>
       )}
+      <FreeShippingNote quote={cart.frete} coupon={cart.cupom} />
       <div className="cart-totals">
         <PriceLine label="Subtotal" value={cart.subtotal_centavos} />
         {cart.cupom && (
@@ -277,12 +322,13 @@ function Cart({
           value={cart.desconto_pix_centavos}
           negative
         />
+        <PriceLine label="Produtos no PIX" value={cart.base_produtos_centavos - cart.desconto_pix_centavos} />
         <PriceLine
           label={`Entrega ${cart.modalidade_frete || ""}`}
           value={cart.valor_frete_centavos}
         />
         <PriceLine
-          label="Total no PIX"
+          label="Total do pedido no PIX"
           value={cart.total_pix_centavos}
           strong
         />
@@ -304,17 +350,16 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
     cep: initialCep || "",
     modalidade_frete: cart?.modalidade_frete || "economica",
   });
-  const [localCart, setLocalCart] = useState(cart);
   const [error, setError] = useState("");
   const quoteMatches =
-    localCart?.frete &&
-    digits(form.cep) === digits(localCart.frete.cep) &&
-    localCart.modalidade_frete === form.modalidade_frete;
+    cart?.frete &&
+    digits(form.cep) === digits(cart.frete.cep) &&
+    cart.modalidade_frete === form.modalidade_frete;
   const field = (name, value) => setForm((old) => ({ ...old, [name]: value }));
   const quote = async (mode = form.modalidade_frete) => {
     setError("");
     try {
-      setLocalCart(await onShipping(form.cep, mode));
+      await onShipping(form.cep, mode);
     } catch (e) {
       setError(e.message);
     }
@@ -324,7 +369,7 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
     if (digits(form.cep).length === 8) quote(mode);
   };
   const quotedCep =
-    localCart?.frete && digits(form.cep) === digits(localCart.frete.cep);
+    cart?.frete && digits(form.cep) === digits(cart.frete.cep);
   const submit = async (event) => {
     event.preventDefault();
     setError("");
@@ -365,28 +410,31 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
             Use apenas dados fictícios neste formulário.
           </p>
           <div className="checkout-summary">
-            <PriceLine
-              label="Produtos"
-              value={localCart.base_produtos_centavos}
-            />
+            <div className="checkout-summary-items">
+              {cart.items.map((item) => (
+                <div key={item.id}>
+                  <span>{item.quantidade}× {item.nome}<small>{money(item.preco_unitario_centavos)} por unidade</small></span>
+                  <strong>{money(item.total_centavos)}</strong>
+                </div>
+              ))}
+            </div>
+            <PriceLine label="Subtotal" value={cart.subtotal_centavos} />
+            {cart.cupom && <PriceLine label={`Cupom ${cart.cupom}`} value={cart.desconto_cupom_centavos} negative />}
+            <PriceLine label={`Frete ${form.modalidade_frete === "expressa" ? "Expresso" : "Econômico"}`} value={quoteMatches ? cart.valor_frete_centavos : null} />
             <PriceLine
               label="Desconto PIX"
-              value={localCart.desconto_pix_centavos}
+              value={cart.desconto_pix_centavos}
               negative
             />
             <PriceLine
-              label="Entrega"
-              value={quoteMatches ? localCart.valor_frete_centavos : null}
-            />
-            <PriceLine
               label="Total no PIX"
-              value={quoteMatches ? localCart.total_pix_centavos : null}
+              value={quoteMatches ? cart.total_pix_centavos : null}
               strong
             />
           </div>
           <form onSubmit={submit} className="checkout-form">
             <label>
-              Nome fictício
+              Nome
               <input
                 required
                 minLength="2"
@@ -396,7 +444,7 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
               />
             </label>
             <label>
-              E-mail fictício
+              E-mail
               <input
                 type="email"
                 required
@@ -430,7 +478,7 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
                 ["economica", "Econômico"],
                 ["expressa", "Expresso"],
               ].map(([mode, label]) => {
-                const option = quotedCep ? localCart.frete.opcoes[mode] : null;
+                const option = quotedCep ? cart.frete.opcoes[mode] : null;
                 return (
                   <label className="freight-option" key={mode}>
                     <input
@@ -461,7 +509,7 @@ function Checkout({ cart, initialCep, onClose, onShipping, onCreate, busy }) {
               })}
             </fieldset>
             <label>
-              Endereço fictício
+              Endereço
               <input
                 required
                 minLength="3"
@@ -646,6 +694,9 @@ function Pix({ order, onClose, onRenew, onPay, busy }) {
 }
 
 export default function App() {
+  const [page, setPage] = useState(() => window.location.hash === "#/debug" ? "debug" : "chat");
+  const [debugCalls, setDebugCalls] = useState([]);
+  const [debugError, setDebugError] = useState("");
   const [products, setProducts] = useState([]);
   const [session, setSession] = useState({
     cart: null,
@@ -663,8 +714,25 @@ export default function App() {
   const [drawer, setDrawer] = useState(false);
   const [checkout, setCheckout] = useState(false);
   const [pix, setPix] = useState(null);
-  const [debugOpen, setDebugOpen] = useState(false);
   const conversationRef = useRef(null);
+
+  useEffect(() => {
+    const syncPage = () => setPage(window.location.hash === "#/debug" ? "debug" : "chat");
+    window.addEventListener("hashchange", syncPage);
+    return () => window.removeEventListener("hashchange", syncPage);
+  }, []);
+  const refreshDebug = async () => {
+    try {
+      setDebugError("");
+      const data = await request("/debug/tools/");
+      setDebugCalls(data.calls);
+    } catch (e) {
+      setDebugError(e.message);
+    }
+  };
+  useEffect(() => {
+    if (page === "debug" && session.cart) refreshDebug();
+  }, [page, session.cart]);
 
   const refresh = async () => {
     const data = await request("/session/");
@@ -723,9 +791,15 @@ export default function App() {
   const add = (id) =>
     transact(() =>
       request("/cart/items/", { method: "POST", body: { id, quantidade: 1 } }),
-    ).then(() => {
-      if (window.matchMedia("(max-width: 960px)").matches) setDrawer(true);
-    });
+    );
+  const addFromCard = async (id) => {
+    try {
+      await add(id);
+      setDrawer(true);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
   const remove = (id) =>
     transact(() =>
       request(`/cart/items/${id}/`, {
@@ -828,20 +902,6 @@ export default function App() {
           </div>
         </div>
         <div className="top-actions">
-          <span className="test-tag">AMBIENTE DE TESTE</span>
-          {session.orders?.length > 0 && (
-            <button className="order-trigger" onClick={reopenOrder}>
-              Acompanhar pedido
-            </button>
-          )}
-          <button
-            className="icon-button debug-trigger"
-            onClick={() => setDebugOpen(true)}
-            title="Ver ferramentas usadas"
-            aria-label="Ver ferramentas usadas"
-          >
-            <Bug size={19} />
-          </button>
           <button
             className="bag-trigger"
             onClick={() => setDrawer(true)}
@@ -853,6 +913,9 @@ export default function App() {
           </button>
         </div>
       </header>
+      {page === "debug" ? (
+        <DebugPage calls={debugCalls} error={debugError} onBack={() => { window.location.hash = ""; }} onRefresh={refreshDebug} />
+      ) : (
       <div className="app-grid">
         <main className="chat">
           <div className="chat-head">
@@ -864,12 +927,15 @@ export default function App() {
             <span className="online">
               <span /> Online
             </span>
+            <button type="button" className="debug-page-trigger" onClick={() => { window.location.hash = "/debug"; }} aria-label="Abrir painel de debug">
+              <Bug size={16} /> <span>Debug</span>
+            </button>
           </div>
           <div className="conversation" ref={conversationRef}>
             {messages.map((m, index) => (
               <div key={index}>
                 <div className={`message ${m.role}`}>
-                  <div className="bubble">{m.text}</div>
+                  <div className="bubble">{m.role === "assistant" ? <FormattedMessage text={m.text} /> : m.text}</div>
                 </div>
                 {m.cards?.length > 0 && (
                   <div className="card-row">
@@ -880,7 +946,7 @@ export default function App() {
                         <ProductCard
                           key={item.id}
                           item={item}
-                          onAdd={add}
+                          onAdd={addFromCard}
                           busy={busy}
                         />
                       ))}
@@ -926,32 +992,9 @@ export default function App() {
               <Send size={18} />
             </button>
           </form>
-          <p className="chat-note">
-            Conversa demonstrativa. Use apenas dados fictícios.
-          </p>
         </main>
-        <aside className="cart-sidebar">
-          <div className="sidebar-heading">
-            <h2>Minha sacola</h2>
-            <span>
-              {count} {count === 1 ? "item" : "itens"}
-            </span>
-          </div>
-          <Cart
-            cart={cart}
-            onAdd={add}
-            onRemove={remove}
-            onCoupon={coupon}
-            onShipping={shipping}
-            onCheckout={() => setCheckout(true)}
-            busy={busy}
-            couponInput={couponInput}
-            setCouponInput={setCouponInput}
-            cepInput={cepInput}
-            setCepInput={setCepInput}
-          />
-        </aside>
       </div>
+      )}
       {drawer && (
         <div
           className="drawer-backdrop"
@@ -970,6 +1013,11 @@ export default function App() {
                 <X size={20} />
               </button>
             </div>
+            {session.orders?.length > 0 && (
+              <button className="order-trigger" onClick={() => { setDrawer(false); reopenOrder(); }}>
+                Acompanhar pedido
+              </button>
+            )}
             <Cart
               cart={cart}
               onAdd={add}
@@ -1007,29 +1055,6 @@ export default function App() {
           onPay={pay}
           busy={busy}
         />
-      )}
-      {debugOpen && (
-        <div
-          className="drawer-backdrop"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setDebugOpen(false);
-          }}
-        >
-          <aside className="debug-drawer">
-            <div className="sidebar-heading">
-              <h2>Ferramentas da Sofia</h2>
-              <button
-                className="icon-button"
-                onClick={() => setDebugOpen(false)}
-                aria-label="Fechar debug"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <p>Chamadas desta conversa, com argumentos e resultados.</p>
-            <pre>{JSON.stringify(session.debug || [], null, 2)}</pre>
-          </aside>
-        </div>
       )}
     </div>
   );
