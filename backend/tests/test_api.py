@@ -1,8 +1,35 @@
 from django.test import SimpleTestCase, override_settings
 from unittest.mock import patch
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 
+@override_settings(SOFIA_EXPORT_CONVERSATIONS=False)
 class ApiSmoke(SimpleTestCase):
+    def test_conversation_is_saved_locally_and_updated_after_payment(self):
+        with TemporaryDirectory() as directory, override_settings(REPO_DIR=Path(directory), SOFIA_EXPORT_CONVERSATIONS=True):
+            def answer(session, message):
+                return {"text": "Olá!", "cards": [], "debug": []}
+
+            with patch("api.views.chat", side_effect=answer):
+                response = self.client.post("/api/chat/", {"message": "Oi"}, content_type="application/json")
+            self.assertEqual(response.status_code, 200)
+            folder = Path(directory) / "docs" / "conversas"
+            files = list(folder.glob("*.txt"))
+            self.assertEqual(len(files), 1)
+            self.assertIn("CLIENTE: Oi", files[0].read_text(encoding="utf-8"))
+            self.assertIn("SOFIA: Olá!", files[0].read_text(encoding="utf-8"))
+
+            self.client.post("/api/cart/items/", {"id": "PH-004"}, content_type="application/json")
+            data = {"nome": "Ana Teste", "email": "ana@example.com", "cep": "01001-000", "endereco": "Rua Exemplo", "numero": "10", "modalidade_frete": "economica"}
+            order = self.client.post("/api/orders/", data, content_type="application/json").json()
+            self.client.post(f"/api/orders/{order['id']}/pix/")
+            self.client.post(f"/api/orders/{order['id']}/simulate-payment/")
+            self.assertEqual(len(list(folder.glob("*.txt"))), 1)
+            saved = files[0].read_text(encoding="utf-8")
+            self.assertIn("Pagamento simulado confirmado", saved)
+            self.assertIn(f"{order['id']}: pago", saved)
+
     def test_checkout_quote_updates_for_cart_coupon_cep_and_shipping_mode(self):
         self.client.post("/api/cart/items/", {"id": "PH-004", "quantidade": 1}, content_type="application/json")
         first = self.client.post("/api/shipping/", {"cep": "01001-000", "modalidade_frete": "economica"}, content_type="application/json").json()

@@ -24,6 +24,7 @@ from commerce.service import (
     money, remove_item, simulate_payment, totals, quote_shipping,
 )
 from sofia_ai.agent import chat
+from commerce.transcript import save_conversation
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +134,7 @@ class ChatView(SessionView):
             else:
                 result["text"] = f"O PIX de teste do pedido {latest['id']} foi renovado por 15 minutos. Gostaria de simular o pagamento? Use o botão no PIX exibido na tela."
         self.state["messages"].extend([{"role": "user", "text": message}, {"role": "assistant", "text": result["text"], "cards": [p["id"] for p in result["cards"]], "checkout_preview": preview}])
+        save_conversation(self.state)
         return Response({**result, "cart": totals(self.state), "checkout_preview": preview, "active_order": order_view(get_order(self.state, latest["id"])) if latest and changed_order else None})
 
 
@@ -183,6 +185,7 @@ class OrdersView(SessionView):
         serializer.is_valid(raise_exception=True)
         order = finalize_order(self.state, serializer.validated_data)
         self.state["messages"].append({"role": "assistant", "text": f"Pedido de teste {order['id']} criado. Vamos gerar seu PIX fictício."})
+        save_conversation(self.state)
         return Response(order_view(order), status=status.HTTP_201_CREATED)
 
 
@@ -203,4 +206,5 @@ class SimulatePaymentView(SessionView):
     def post(self, request, order_id):
         order = simulate_payment(self.state, order_id)
         self.state["messages"].append({"role": "assistant", "text": f"Pagamento simulado confirmado para {order_id}. Obrigada pela compra de teste! 💕"})
+        save_conversation(self.state)
         return Response(order_view(order))
