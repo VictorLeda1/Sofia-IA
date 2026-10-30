@@ -1,89 +1,59 @@
 # Sofia Prohall · teste técnico
 
-Aplicação demonstrativa da consultora capilar Sofia: API Django + DRF e interface React no mesmo repositório, em pastas separadas. Todo pedido, frete, estoque e PIX aqui é fictício.
+Consultora capilar com API Django/DRF e chat React. Pedidos, fretes e pagamentos são simulações.
 
-## Estrutura
+## Executar e configurar a IA
 
-- `data/produtos.json`: 15 fichas da [loja Prohall](https://lojaprohall.com.br/collections/all), consultadas em **29/10/2026**. O preço vigente é `preco_promocional` quando existe; do contrário, `preco`.
-- `docs/criterios_recomendacao.md`: quando cada produto faz sentido, limitações e justificativas para combinações.
-- `backend/catalog/`: leitura do catálogo e preço vigente.
-- `backend/commerce/`: funções determinísticas de estoque, carrinho, cupom, frete, pedido e PIX falso.
-- `backend/sofia_ai/`: prompt em arquivo próprio, declarações e execução de ferramentas, orquestração do Gemini.
-- `backend/api/`: rotas DRF, validação HTTP e documentação OpenAPI.
-- `backend/tests/`: casos exatos do desafio e fluxo de API sem banco.
-- `frontend/`: chat React, cards de produto, sacola, checkout, PIX e painel de debug. Veja `frontend/README.md`.
-- `agents/`: instruções reutilizáveis dos agentes de backend e frontend; o agente de frontend usa o Impeccable instalado no projeto.
+Requisitos: **Python 3.11+**, **Node.js 20+** com npm e uma chave Gemini válida para usar o chat. A chave fica exclusivamente no backend. O modelo permitido pelo [teste da Prohall](https://prohall.app.br/docs_prohall/teste-ia-vendas/) é `gemini-3.8-flash`.
 
-## Executar no Windows (PowerShell)
-
-Requisitos: Python 3.11+ e uma chave de teste Gemini fornecida pela Prohall para usar o chat. As demais rotas funcionam sem a chave.
+No PowerShell, a partir da raiz do repositório, instale o backend e crie o arquivo de ambiente:
 
 ```powershell
-cd 'C:\Users\victo\projetos\Sofia IA'
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r backend\requirements.txt
 Copy-Item backend\.env.example backend\.env
 ```
 
-Edite **somente** `backend/.env` e preencha `GEMINI_API_KEY`. Não coloque a chave no frontend, no código, no Git, em prints ou no vídeo. O arquivo `.env` está no `.gitignore`; `.env.example` não contém segredo. `GEMINI_MODEL` tem padrão `gemini-3.8-flash`, o único modelo permitido pelo desafio. A chave ainda não foi fornecida, então a chamada real ao Gemini está pendente de validação.
+Edite `backend/.env` e preencha `GEMINI_API_KEY` com sua chave. Mantenha `GEMINI_MODEL=gemini-3.8-flash`. O `.env` está no `.gitignore`; nunca coloque a chave no frontend ou no Git. Para iniciar a API:
 
 ```powershell
 cd backend
 python manage.py check
-python manage.py test
 python manage.py runserver 8000
 ```
 
-Em outro terminal, rode o frontend:
+Em outro terminal, a partir da raiz do repositório, instale e inicie o frontend:
 
 ```powershell
-cd 'C:\Users\victo\projetos\Sofia IA\frontend'
+cd frontend
 npm install
 npm run dev
 ```
 
-Abra `http://127.0.0.1:5173`. O Vite encaminha `/api` ao Django; o navegador mantém o cookie de sessão. O frontend não lê a chave Gemini.
+Abra `http://127.0.0.1:5173` para conversar com Sofia e [Swagger](http://127.0.0.1:8000/api/docs/) para explorar a API. O Vite encaminha `/api` ao Django. Não execute `migrate`: esta etapa não usa banco de dados.
 
-Não rode `migrate`: a API não usa banco, models ou tabelas. Abra [Swagger](http://127.0.0.1:8000/api/docs/) para ver e testar os endpoints. O schema também está em `/api/schema/` e em `backend/schema.yaml` como referência gerada.
+## Estrutura
 
-## Rotas
+- `backend/catalog/`: catálogo e preço vigente.
+- `backend/commerce/`: estoque, carrinho, cupom, frete, pedidos e PIX simulado, com cálculos determinísticos.
+- `backend/sofia_ai/`: prompt separado, Gemini e ferramentas de venda.
+- `backend/api/`: rotas DRF e documentação OpenAPI; `/api/debug/tools/` lista ferramentas e argumentos da sessão.
+- `backend/tests/`: testes do cálculo, da API e do uso das ferramentas.
+- `frontend/`: chat, cards, sacola, formulário de checkout, PIX e página `#/debug`.
+- `data/produtos.json`: as 15 fichas usadas pela aplicação.
+- `docs/criterios_recomendacao.md`: critérios de indicação, limites e combinações em detalhe.
+- `agents/`: instruções dos agentes de backend e frontend.
 
-Todas começam com `/api/` e usam barra final.
+## Decisões técnicas e regras relevantes
 
-| Método e caminho | Função |
-|---|---|
-| `GET products/` e `GET products/{id}/` | Catálogo e ficha completa |
-| `GET session/` | Carrinho, mensagens, chamadas de ferramentas e pedidos da sessão |
-| `POST chat/` | Conversa Gemini com function calling (`{"message":"..."}`) |
-| `POST cart/items/` | Adicionar (`{"id":"PH-004","quantidade":1}`) |
-| `DELETE cart/items/{id}/` | Remover tudo ou `{"quantidade":1}` |
-| `POST coupon/` | Aplicar (`{"codigo":"PROHALL10"}`) |
-| `POST shipping/` | Frete do carrinho (`{"cep":"01001-000","modalidade_frete":"expressa"}`); modalidade opcional |
-| `POST orders/` | Criar pedido com dados fictícios |
-| `GET orders/{id}/` | Consultar status e expiração |
-| `POST orders/{id}/pix/` | Criar ou renovar PIX falso |
-| `POST orders/{id}/simulate-payment/` | Marcar pagamento simulado |
+O chat e o formulário são **dois caminhos para o mesmo pedido**. Pelo chat, Sofia prepara o resumo, recebe a escolha do frete e gera o PIX de teste. Pelo formulário, a pessoa escolhe o frete e cria o pedido diretamente. Ambos usam as mesmas funções em `backend/commerce/`. O resumo do formulário lê os valores devolvidos pela API.
 
-O navegador mantém o cookie `sofia_session` HttpOnly. Para consumir a API do React em `localhost:5173`, use `fetch(..., { credentials: 'include' })`. As respostas trazem dinheiro em **centavos** (`total_pix_centavos`, `valor_frete_centavos` etc.), evitando erros de ponto flutuante. O PIX traz `pix.texto`, `pix.expira_em` e `qr_data_url`. O texto começa com `PIX-TESTE` e termina em `NAO-PAGAVEL`; não é BR Code nem contém chave PIX real.
+Valores monetários são enviados em centavos. O cupom `PROHALL10` dá 10% sobre os produtos quando o subtotal chega a R$ 150,00. O PIX reduz 5% do valor dos produtos após o cupom, sem reduzir o frete. A entrega Econômica fica grátis conforme a faixa do CEP e o valor dos produtos após cupom; a Expressa mantém sua tarifa. O backend calcula estoque, descontos, frete e total; o Gemini consulta as ferramentas e não deve calcular valores por conta própria.
 
-Exemplo de checkout:
+O catálogo resumido entra no contexto da IA, e `detalhar_produto` consulta as fichas completas antes de uma indicação. A aplicação usa um cookie HttpOnly para identificar a sessão em memória. O PIX é obviamente falso, não pagável e expira em 15 minutos; o botão de simulação muda o status do pedido para `pago`.
 
-```json
-{
-  "nome": "Ana Teste",
-  "email": "ana@example.com",
-  "cep": "01001-000",
-  "endereco": "Rua Exemplo",
-  "numero": "10",
-  "complemento": "Apto 4",
-  "modalidade_frete": "economica"
-}
-```
-
-O pedido pode ser criado por essa rota ou pela Sofia usando `finalizar_pedido`. Os dois caminhos usam a mesma função em `commerce/`.
-
-## Combinações úteis
+### Combinações úteis
 
 | Produtos | Por que se complementam |
 |---|---|
@@ -91,20 +61,29 @@ O pedido pode ser criado por essa rota ou pela Sofia usando `finalizar_pedido`. 
 | PH-004 Shampoo Biomask + PH-005 Máscara Biomask | A ficha da máscara orienta lavar previamente com o shampoo Biomask. |
 | PH-014 Twist Curls + PH-015 Raízes & Vibes 3ABC | A máscara hidrata fios cacheados; o creme sem enxágue ajuda a definir cachos 3ABC após a lavagem. |
 
-Essas combinações dependem da necessidade da cliente. Consulte `docs/criterios_recomendacao.md` para indicações e cuidados.
+Essas combinações dependem da necessidade da cliente. Consulte [os critérios detalhados](docs/criterios_recomendacao.md) para indicações e cuidados.
 
-## Decisões e limites desta etapa
+## Preços e catálogo
 
-- Estado guardado em memória por sessão de navegador. **Reiniciar o processo apaga carrinho, conversa e pedidos.** Use um único processo para o teste; múltiplos workers não compartilham memória.
-- O catálogo resumido entra no prompt, e a IA usa `detalhar_produto` para consultar a ficha completa. Isso reduz o contexto inicial sem retirar informações que ela precise conferir.
-- O código valida todos os argumentos das ferramentas. Erros de validação voltam à IA para que ela se corrija; os cálculos nunca são feitos pelo modelo.
-- O estoque é fictício; `PH-010` tem duas unidades para testar escassez verdadeira.
-- O peso de frete de `PH-007` foi estimado em 300 g porque o cadastro da loja informa 50 g para uma máscara de 250 g. O catálogo marca `peso_estimado: true`.
-- O modo de uso da `PH-007` não está detalhado na loja, e o da `PH-014` é ambíguo sobre enxágue. A Sofia deve reconhecer esses limites.
-- Não há pagamento real, integração logística, persistência ou autenticação de clientes. O vídeo e as três conversas exportadas dependem da chave Gemini para demonstrar uma venda real do começo ao fim.
+As fichas públicas da [loja Prohall](https://lojaprohall.com.br/collections/all) foram consultadas em **29/10/2026**. O preço vigente usa `preco_promocional` quando existe; caso contrário, `preco`. São dados de referência do teste, sujeitos a mudanças na loja.
 
-## Verificação
+## Testes
 
-`python manage.py test` cobre os seis resultados da seção 5.6, o cálculo da seção 6.2, cupom que deixa de valer após remoção, estoque, CEP inválido, expiração/renovação do PIX, fluxo HTTP e uma chamada simulada de ferramenta do Gemini. `python manage.py spectacular --validate --file schema.yaml` valida o Swagger.
+```powershell
+cd backend
+python manage.py test
+python manage.py spectacular --validate --file schema.yaml
+```
 
-No frontend, `npm run build` verifica a compilação de produção. O agente de frontend usou o [Impeccable](https://impeccable.style/#downloads) para revisar a interface; instruções de instalação e uso estão em `frontend/README.md`.
+Para conferir a compilação da interface:
+
+```powershell
+cd frontend
+npm run build
+```
+
+Os testes do backend cobrem cenários de frete e totais do desafio, cupom, estoque, CEP inválido, PIX, fluxo HTTP, chamadas de ferramentas e o roteiro de perguntas em etapas para cabelo loiro com luzes e interesse em alisar.
+
+## Limitações
+
+O estado vive apenas na memória de um processo: reiniciar o backend apaga conversa, sacola e pedidos; múltiplos workers não compartilham sessões. Não há banco, autenticação de clientes, logística ou pagamento real. O peso de frete de PH-007 foi estimado em 300 g porque o cadastro da loja informa 50 g para uma máscara de 250 g. A ficha de PH-007 não detalha o modo de uso, e a de PH-014 é ambígua sobre enxágue; Sofia deve reconhecer esses limites.
