@@ -83,6 +83,16 @@ Exemplo de checkout:
 
 O pedido pode ser criado por essa rota ou pela Sofia usando `finalizar_pedido`. Os dois caminhos usam a mesma função em `commerce/`.
 
+## Combinações úteis
+
+| Produtos | Por que se complementam |
+|---|---|
+| PH-001 Select Blond + PH-008 Equalize Mask | A ficha da Select Blond orienta usar a Equalize Mask após o procedimento para equilibrar o pH. |
+| PH-004 Shampoo Biomask + PH-005 Máscara Biomask | A ficha da máscara orienta lavar previamente com o shampoo Biomask. |
+| PH-014 Twist Curls + PH-015 Raízes & Vibes 3ABC | A máscara hidrata fios cacheados; o creme sem enxágue ajuda a definir cachos 3ABC após a lavagem. |
+
+Essas combinações dependem da necessidade da cliente. Consulte `docs/criterios_recomendacao.md` para indicações e cuidados.
+
 ## Decisões e limites desta etapa
 
 - Estado guardado em memória por sessão de navegador. **Reiniciar o processo apaga carrinho, conversa e pedidos.** Use um único processo para o teste; múltiplos workers não compartilham memória.
