@@ -1,0 +1,107 @@
+Conversa Sofia IA — ambiente de teste
+Dados usados nesta conversa devem ser fictícios.
+
+CLIENTE: Oi! Tenho cabelo loiro com luzes, muito frizz e quero alisar. O que você indica?
+
+SOFIA: Oi! Seja muito bem-vinda, vai ser um prazer ajudar você a cuidar do seu loiro. ✨
+
+Como cabelos com luzes exigem um cuidado bem especial no alinhamento, a aplicação seria feita em casa ou por um profissional?
+
+CLIENTE: em casa
+
+SOFIA: Entendido! 
+
+E me conta: no momento, seus fios estão fragilizados ou quebradiços?
+
+CLIENTE: quebradiços
+
+SOFIA: Como os seus fios estão quebradiços e com luzes, não é seguro realizar um procedimento de alinhamento térmico em casa agora, pois o calor intenso da prancha pode agravar os danos e quebrar ainda mais o cabelo.
+
+O ideal no momento é tratar e fortalecer a fibra capilar antes de qualquer química. Minha recomendação principal para você é a **Máscara de Reconstrução Proboo Fiber 250g**, que repõe a massa perdida com aminoácidos e queratina, devolvendo a força e a resistência que o seu loiro precisa para parar de quebrar.
+
+Você gostaria de incluir a Proboo Fiber para iniciar esse tratamento de recuperação?
+Produtos exibidos: PH-006, PH-008
+
+CLIENTE: sim
+
+SOFIA: Perfeito! 
+
+Quantas unidades da Máscara Proboo Fiber você gostaria de levar?
+
+CLIENTE: 5
+
+SOFIA: Adicionei 5 unidades da Máscara Proboo Fiber ao seu carrinho. 
+
+Podemos seguir para o fechamento do pedido?
+
+CLIENTE: qual o frete para 69005-000
+
+SOFIA: Para o CEP 69005-000, temos estas opções de entrega:
+
+• **Econômica**: R$ 54,90 (prazo de 9 a 15 dias úteis)  
+• **Expressa**: R$ 89,90 (prazo de 4 a 8 dias úteis)
+
+Faltam apenas R$ 24,50 em produtos para você garantir o frete grátis na opção Econômica!
+
+Você gostaria de adicionar mais um produto para aproveitar o frete grátis?
+
+CLIENTE: sim
+
+SOFIA: Uma excelente combinação para o seu tratamento e que já garante o frete grátis é o **Óleo Reparador Absolut Oil 60ml** (R$ 79,90). Ele sela as cutículas, repara as pontas e combate o frizz, dando um acabamento sedoso e com muito brilho aos fios.
+
+Gostaria de adicionar o Absolut Oil ao seu carrinho?
+Produtos exibidos: PH-012, PH-013
+
+CLIENTE: sim 2
+
+SOFIA: Adicionei 2 unidades do Absolut Oil ao seu carrinho e você garantiu o frete grátis na opção Econômica! 
+
+Podemos seguir para o fechamento do pedido?
+
+CLIENTE: Como uso esse produto? Quanto tempo dura o resultado?
+
+SOFIA: O modo de uso de cada um é bem simples:
+
+• **Máscara Proboo Fiber**: lave os fios com shampoo, retire o excesso de água e aplique no comprimento e pontas massageando suavemente. Deixe agir de 5 a 10 minutos, enxágue bem e finalize como preferir.  
+• **Óleo Absolut Oil**: aplique uma pequena quantidade na palma das mãos e espalhe delicadamente do comprimento às pontas, evitando a raiz, nos fios úmidos ou secos.
+
+Sobre a duração exata do resultado, essa informação não está disponível na ficha dos produtos, mas se você quiser, posso direcionar seu contato para nossa equipe técnica tirar mais dúvidas sobre isso.
+
+Podemos seguir para o fechamento do seu pedido?
+
+CLIENTE: sim
+
+SOFIA: Perfeito! 
+
+Para darmos andamento ao seu pedido, você pode me informar seu nome e e-mail?
+
+CLIENTE: victor, teste@t
+
+SOFIA: Obrigada, Victor! 
+
+Agora, você pode me informar o seu endereço e número (o complemento é opcional)?
+
+CLIENTE: rua t 123
+
+SOFIA: Parece que o e-mail informado não é válido. 
+
+Você poderia me informar um e-mail completo, por favor?
+
+CLIENTE: victor@teste.com a e minha rua na verdade é a rua teste 123
+
+SOFIA: Confira o resumo calculado do pedido abaixo:
+Subtotal: R$ 534,30.
+Desconto no PIX: R$ 26,72.
+Produtos no PIX, após descontos: R$ 507,58.
+Frete Econômico: R$ 0,00 (grátis), 9 a 15 dias úteis. Total do pedido no PIX: R$ 507,58.
+Frete Expresso: R$ 129,90, 4 a 8 dias úteis. Total do pedido no PIX: R$ 637,48.
+Você prefere frete Econômico ou Expresso?
+
+CLIENTE: Quero o frete Econômico
+
+SOFIA: Pedido PH-TESTE-6600A399 criado e aguardando pagamento. O PIX de teste no valor de R$ 507,58 está disponível por 15 minutos. Gostaria de simular o pagamento? Use o botão no PIX exibido na tela.
+
+SOFIA: Pagamento simulado confirmado para PH-TESTE-6600A399. Obrigada pela compra de teste! 💕
+
+Pedidos nesta conversa:
+- PH-TESTE-6600A399: pago

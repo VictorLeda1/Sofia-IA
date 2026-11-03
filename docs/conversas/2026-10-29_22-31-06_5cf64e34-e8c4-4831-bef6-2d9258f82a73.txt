@@ -1,0 +1,82 @@
+Conversa Sofia IA — ambiente de teste
+Dados usados nesta conversa devem ser fictícios.
+
+CLIENTE: Ola tudo bem? tenho cabelo cacheado queria um produto para o cuidado diario
+
+SOFIA: Olá! Tudo ótimo, e com você? 😊
+
+Para o cuidado diário dos cachos, a nossa principal indicação é o **Creme de Pentear 3ABC Raízes & Vibes (450g)**, que hidrata continuamente, controla o frizz e garante definição com movimento para curvaturas 3ABC.
+
+Você gostaria de levar o Creme de Pentear Raízes & Vibes?
+Produtos exibidos: PH-015
+
+CLIENTE: sim
+
+SOFIA: Perfeito! 
+
+Quantas unidades do Creme de Pentear Raízes & Vibes você deseja levar?
+
+CLIENTE: 1 so
+
+SOFIA: Adicionei 1 unidade do **Creme de Pentear Raízes & Vibes** ao seu carrinho por R$ 69,90.
+
+Podemos seguir para o fechamento do seu pedido?
+
+CLIENTE: sim
+
+SOFIA: Ótimo! Para começarmos o cadastro da entrega, você poderia me informar seu nome, e-mail e CEP?
+
+CLIENTE: voce tem algo mais para cabelo masculino?
+
+SOFIA: Nossos produtos são unissex e atendem perfeitamente aos cabelos masculinos, sendo indicados de acordo com o tipo e a necessidade de cada fio.
+
+Qual é a necessidade principal ou o tipo de cabelo dele no momento?
+
+CLIENTE: ele pode usar esse produto tambem?
+
+SOFIA: Pode sim! Se o cabelo dele também for cacheado (curvaturas 3ABC), ele pode usar o Creme de Pentear tranquilamente para hidratar, alinhar e definir os fios.
+
+O cabelo dele também tem curvatura cacheada?
+
+CLIENTE: sim
+
+SOFIA: Que ótimo, então vai funcionar super bem para ele também!
+
+Você gostaria de adicionar mais uma unidade do Creme de Pentear para ele?
+
+CLIENTE: sim
+
+SOFIA: Prontinho! Agora você tem 2 unidades do **Creme de Pentear Raízes & Vibes** no carrinho, totalizando R$ 139,80.
+
+Para continuarmos com a entrega, você pode me informar seu nome, e-mail e CEP?
+
+CLIENTE: nome teste, teste@teste.com 69005-00
+
+SOFIA: Obrigada pelos dados! Notei que o CEP informado ficou com 7 dígitos (69005-00).
+
+Você poderia me confirmar o seu CEP completo com 8 dígitos?
+
+CLIENTE: 69005-000
+
+SOFIA: Perfeito!
+
+Qual é o seu endereço e número (e complemento, se houver) para a entrega?
+
+CLIENTE: rua teste 123
+
+SOFIA: Confira o resumo calculado do pedido abaixo:
+Subtotal: R$ 139,80.
+Desconto no PIX: R$ 6,99.
+Produtos no PIX, após descontos: R$ 132,81.
+Frete Econômico: R$ 54,90, 9 a 15 dias úteis. Total do pedido no PIX: R$ 187,71.
+Frete Expresso: R$ 89,90, 4 a 8 dias úteis. Total do pedido no PIX: R$ 222,71.
+Você prefere frete Econômico ou Expresso?
+
+CLIENTE: Quero o frete Expresso
+
+SOFIA: Pedido PH-TESTE-582FD47F criado e aguardando pagamento. O PIX de teste no valor de R$ 222,71 está disponível por 15 minutos. Gostaria de simular o pagamento? Use o botão no PIX exibido na tela.
+
+SOFIA: Pagamento simulado confirmado para PH-TESTE-582FD47F. Obrigada pela compra de teste! 💕
+
+Pedidos nesta conversa:
+- PH-TESTE-582FD47F: pago

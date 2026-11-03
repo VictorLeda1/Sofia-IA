@@ -1,0 +1,78 @@
+Conversa Sofia IA — ambiente de teste
+Dados usados nesta conversa devem ser fictícios.
+
+CLIENTE: o que voce tem pra cabelos elasticos com corte quimico
+
+SOFIA: Sinto muito que você esteja passando por isso, o corte químico e o efeito elástico pedem cuidados bem específicos para recuperar a fibra capilar.
+
+A minha indicação principal para você é a **Máscara Proboo Fiber 250g** (de R$ 109,90 por R$ 74,90), porque ela faz reposição profunda de massa com queratina e 19 aminoácidos, devolvendo a resistência aos fios elásticos e evitando a quebra.
+
+Como complemento, a **Máscara Equalize Mask 300g** (de R$ 99,90 por R$ 74,90) tem a função distinta de neutralizar e equilibrar o pH desestabilizado pela química, combatendo a porosidade intensa.
+
+Você gostaria de levar a Proboo Fiber para iniciar a reconstrução dos fios?
+Produtos exibidos: PH-006, PH-008
+
+CLIENTE: sim e o complemento tambem
+
+SOFIA: Ótima escolha, essa dupla vai tratar a estrutura e o pH dos fios de forma completa!
+
+Quantas unidades de cada máscara você gostaria de levar?
+
+CLIENTE: 1
+
+SOFIA: Adicionei ao seu carrinho:
+- 1 unidade da **Máscara Proboo Fiber 250g** (R$ 74,90)
+- 1 unidade da **Máscara Equalize Mask 300g** (R$ 74,90)
+
+O subtotal ficou em R$ 149,80.
+
+Podemos fechar o seu pedido agora?
+
+CLIENTE: sim
+
+SOFIA: Perfeito! Para começarmos o cadastro da entrega, você pode me informar seu nome, e-mail e CEP?
+
+CLIENTE: victor, teste@teste.com
+
+SOFIA: Anotado, Victor!
+
+Qual é o seu CEP?
+
+CLIENTE: 70000-000
+
+SOFIA: Obrigada!
+
+Agora, você poderia me informar o seu endereço e número (o complemento é opcional)?
+
+CLIENTE: rua teste 123
+
+SOFIA: Confira o resumo calculado do pedido abaixo:
+Subtotal: R$ 149,80.
+Desconto no PIX: R$ 7,49.
+Produtos no PIX, após descontos: R$ 142,31.
+Frete Econômico: R$ 29,90, 5 a 9 dias úteis. Total do pedido no PIX: R$ 172,21.
+Frete Expresso: R$ 48,90, 2 a 4 dias úteis. Total do pedido no PIX: R$ 191,21.
+Você prefere frete Econômico ou Expresso?
+
+CLIENTE: tem desconto?
+
+SOFIA: Você já tem garantido o desconto de 5% no pagamento via PIX (uma economia de R$ 7,49 nos produtos). 
+
+Além dele, temos o cupom **PROHALL10** (que dá 10% de desconto), mas ele é válido para compras a partir de R$ 150,00. O seu subtotal atual é de R$ 149,80 — faltam apenas R$ 0,20 para atingir esse valor.
+
+Você gostaria de adicionar outro item para aproveitar o cupom, ou prefere seguir com a escolha do frete?
+
+CLIENTE: não quero finalizar
+
+SOFIA: Sem problemas, vamos seguir com os itens que você escolheu!
+
+Você prefere frete Econômico ou Expresso?
+
+CLIENTE: economico
+
+SOFIA: Pedido PH-TESTE-E38B6F91 criado e aguardando pagamento. O PIX de teste no valor de R$ 172,21 está disponível por 15 minutos. Gostaria de simular o pagamento? Use o botão no PIX exibido na tela.
+
+SOFIA: Pagamento simulado confirmado para PH-TESTE-E38B6F91. Obrigada pela compra de teste! 💕
+
+Pedidos nesta conversa:
+- PH-TESTE-E38B6F91: pago
