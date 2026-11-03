@@ -23,7 +23,7 @@ Sofia é uma consultora capilar em chat web. Ela entende a necessidade da client
 | `backend/tests/` | Testes de frete, totais, pedido, API e integração simulada das ferramentas. |
 | `README.md` | Primeiras instruções de execução, configuração da IA, decisões e limitações. |
 
-Os documentos em `agents/` registram o escopo de backend e frontend usado durante a construção. Este `AGENTS.md` é a orientação geral para manutenção.
+Este `AGENTS.md` é a orientação geral para manutenção.
 
 ## Contrato entre as camadas
 

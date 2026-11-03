@@ -44,7 +44,6 @@ Abra `http://127.0.0.1:5173` para conversar com Sofia e [Swagger](http://127.0.0
 - `data/produtos.json`: as 15 fichas usadas pela aplicação.
 - `docs/criterios_recomendacao.md`: critérios de indicação, limites e combinações em detalhe.
 - `docs/conversas/`: transcrições em `.txt`, uma por sessão de chat. São atualizadas automaticamente e aparecem como arquivos novos no Git para você escolher quais incluir na entrega. Use apenas dados fictícios nas conversas.
-- `agents/`: instruções dos agentes de backend e frontend.
 
 ## Decisões técnicas e regras relevantes
 
